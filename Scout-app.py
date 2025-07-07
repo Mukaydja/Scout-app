@@ -82,9 +82,6 @@ with container_def:
 
 commentaire_general = st.text_area("Commentaire général", height=100)
 
-# --------------------------
-# Création du PDF
-# --------------------------
 def create_pdf():
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
@@ -95,7 +92,7 @@ def create_pdf():
     pdf.cell(0, 15, "Rapport de Scouting Football", ln=True, align="C")
     pdf.ln(4)
 
-    # Infos générales
+    # --- Informations générales ---
     pdf.set_fill_color(230, 240, 250)
     pdf.set_draw_color(30, 60, 90)
     pdf.set_line_width(0.7)
@@ -127,7 +124,9 @@ def create_pdf():
 
     pdf.ln(8)
 
-    # Critères Offensifs
+    # -----------------------------
+    # CRITÈRES OFFENSIFS
+    # -----------------------------
     pdf.set_fill_color(200, 220, 255)
     pdf.set_font("Helvetica", "B", 14)
     pdf.set_text_color(10, 40, 80)
@@ -153,15 +152,18 @@ def create_pdf():
         row_height = max_lines * 6
         pdf.set_xy(x_start, y_start)
         pdf.multi_cell(col_widths[0], 6, crit, border=1)
+        final_y_crit = pdf.get_y()
         pdf.set_xy(x_start + col_widths[0], y_start)
         pdf.multi_cell(col_widths[1], row_height, str(note), border=1, align="C")
         pdf.set_xy(x_start + col_widths[0] + col_widths[1], y_start)
         pdf.multi_cell(col_widths[2], 6, comm, border=1)
-        pdf.set_y(max(y_start + row_height, pdf.get_y()))
+        pdf.set_y(max(final_y_crit, y_start + row_height))
 
     pdf.ln(5)
 
-    # Critères Défensifs
+    # -----------------------------
+    # CRITÈRES DÉFENSIFS
+    # -----------------------------
     pdf.set_fill_color(255, 220, 220)
     pdf.set_font("Helvetica", "B", 14)
     pdf.set_text_color(80, 10, 10)
@@ -186,20 +188,22 @@ def create_pdf():
         row_height = max_lines * 6
         pdf.set_xy(x_start, y_start)
         pdf.multi_cell(col_widths[0], 6, crit, border=1)
+        final_y_crit = pdf.get_y()
         pdf.set_xy(x_start + col_widths[0], y_start)
         pdf.multi_cell(col_widths[1], row_height, str(note), border=1, align="C")
         pdf.set_xy(x_start + col_widths[0] + col_widths[1], y_start)
         pdf.multi_cell(col_widths[2], 6, comm, border=1)
-        pdf.set_y(max(y_start + row_height, pdf.get_y()))
+        pdf.set_y(max(final_y_crit, y_start + row_height))
 
     pdf.ln(10)
 
-    # Commentaire général & moyenne
+    # --- Commentaire général et note moyenne ---
     toutes_notes = list(notes_off.values()) + list(notes_def.values())
     moyenne = round(sum(toutes_notes) / len(toutes_notes), 2) if toutes_notes else 0
     texte_commentaire = commentaire_general.strip() or "-"
     texte_affiche = f"Commentaire général : {texte_commentaire}"
     largeur_commentaire = 190 - 2 * 10
+    pdf.set_font("Helvetica", "", 11)
     lignes = pdf.multi_cell(largeur_commentaire, 7, texte_affiche, border=0, align='L', split_only=True)
     hauteur_ligne = 7
     hauteur_totale = hauteur_ligne * len(lignes) + 15
@@ -218,16 +222,10 @@ def create_pdf():
     for ligne in lignes:
         pdf.cell(0, hauteur_ligne, ligne, ln=True)
 
-    # ✅ Générer le fichier PDF en bytes
-    return pdf.output(dest="S").encode("latin1")
+    # ✅ Fix final ici (important)
+    return pdf.output(dest="S").encode("latin1", errors="ignore")
 
-# 📥 Télécharger le PDF
 if st.button("Générer le PDF"):
     pdf_bytes = create_pdf()
     st.success("✅ PDF généré avec succès !")
-    st.download_button(
-        label="📄 Télécharger le PDF",
-        data=pdf_bytes,
-        file_name=f"rapport_{prenom}_{nom}.pdf",
-        mime="application/pdf"
-    )
+    st.download_button(label="📥 Télécharger le PDF", data=pdf_bytes, file_name=f"rapport_{prenom}_{nom}.pdf", mime="application/pdf")
